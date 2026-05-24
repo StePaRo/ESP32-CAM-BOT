@@ -1,6 +1,5 @@
 /*
- * ESP32_S3_CamBot_nach_google_2_
- * ====================
+ * ESP32_S3_CAM_BOT_MODULE
  * Kamera-Roboter-Sketch fuer GOOUUU ESP32-S3-CAM
  * - MJPEG-Stream auf Port 81 (eigener Server-Task)
  * - Steuerseite auf Port 80
@@ -35,10 +34,10 @@
 //#define WIFI_PASS "92610962075564612677"
 
 // ── Motorpins (GOOUUU ESP32-S3-CAM) ──────────────────────────────────────────
-#define PIN_L_A 4
-#define PIN_L_B 5
-#define PIN_R_A 6
-#define PIN_R_B 7
+#define PIN_L_A 1
+#define PIN_L_B 2
+#define PIN_R_A 19
+#define PIN_R_B 20
 
 // ── Licht-Pins (GOOUUU ESP32-S3-CAM) ─────────────────────────────────────────
 #define PIN_LED_WEISS 21  // Deine aktuelle Weisse LED (später RGB-Rot)
