@@ -16,6 +16,7 @@ extern float MAX_SPEED_CAL;
 extern float KORREKTUR_LINKS;
 extern float KORREKTUR_RECHTS;
 extern bool lichtAn;
+extern bool apModus;
 
 // ── Externe Funktionen aus der Hauptdatei ─────────────────────────────────────
 void tankMix(int fahrt, int kurve);
@@ -107,7 +108,7 @@ esp_err_t licht_handler(httpd_req_t *req) {
  */
 esp_err_t streamurl_handler(httpd_req_t *req) {
     char url[64];
-    snprintf(url, sizeof(url), "http://%s:81/stream", WiFi.localIP().toString().c_str());
+   snprintf(url, sizeof(url), "http://%s:81/stream", (apModus ? WiFi.softAPIP() : WiFi.localIP()).toString().c_str());
     
     httpd_resp_set_type(req, "text/plain");
     httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");

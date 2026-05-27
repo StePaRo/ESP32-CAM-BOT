@@ -7,12 +7,9 @@
  * - Tanksteuerung: Joystick-Interface
  * - Licht-Button & Live-Kalibrierung
  *
- * Motorpins:
- * Motor Links: PIN_L_A / PIN_L_B (GPIO 4 & 5)
- * Motor Rechts: PIN_R_A / PIN_R_B (GPIO 6 & 7)
- * Licht: PIN_LED_WEISS (GPIO 21)
  */
-#define SKETCH_NAME "ESP32_S3_CamBot_nach_google_2_"
+
+#define SKETCH_NAME "ESP32_S3_CAM_BOT_MODULE"
 #define SKETCH_VERSION "V_x"
 
 // ── Kameramodell ─────────────────────────────────────────────────────────────
@@ -38,14 +35,16 @@
 #define PIN_L_B 2
 #define PIN_R_A 19
 #define PIN_R_B 20
+#define PIN_WIFI_MODE 3
 
 // ── Licht-Pins (GOOUUU ESP32-S3-CAM) ─────────────────────────────────────────
 #define PIN_LED_WEISS 21  // Deine aktuelle Weisse LED (später RGB-Rot)
-#define PIN_LED_GRUEN 47  // Für spätere RGB-Erweiterung reserviert
-#define PIN_LED_BLAU 48   // Für spätere RGB-Erweiterung reserviert
+// #define PIN_LED_GRUEN 47  // Für spätere RGB-Erweiterung reserviert
+// #define PIN_LED_BLAU 48   // Für spätere RGB-Erweiterung reserviert
 
-// Globaler Lichtstatus
+// Globale Zustände
 bool lichtAn = false;
+bool apModus = false;  // Heimnetz, kein Accesspoint
 
 // ── PWM Frequenzen ───────────────────────────────────────────────────────────
 #define PWM_FREQ 1000
@@ -71,15 +70,15 @@ void setupPins() {
   ledcAttachChannel(PIN_R_A, 5000, 8, 2);  // Kanal 2
   ledcAttachChannel(PIN_R_B, 5000, 8, 3);  // Kanal 3
 
-  // LED Pins vorbereiten
+  pinMode(PIN_WIFI_MODE, INPUT_PULLUP);
   pinMode(PIN_LED_WEISS, OUTPUT);
-  pinMode(PIN_LED_GRUEN, OUTPUT);
-  pinMode(PIN_LED_BLAU, OUTPUT);
+  // pinMode(PIN_LED_GRUEN, OUTPUT);
+  // pinMode(PIN_LED_BLAU, OUTPUT);
 
   // Alles beim Start AUS
   digitalWrite(PIN_LED_WEISS, LOW);
-  digitalWrite(PIN_LED_GRUEN, LOW);
-  digitalWrite(PIN_LED_BLAU, LOW);
+  // digitalWrite(PIN_LED_GRUEN, LOW);
+  // digitalWrite(PIN_LED_BLAU, LOW);
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -223,26 +222,38 @@ void setup() {
     ESP.restart();
   }
 
-  WiFi.mode(WIFI_STA);
-  WiFi.disconnect(true);
-  delay(100);
-  WiFi.begin(WIFI_SSID, WIFI_PASS);
-  Serial.print("[WiFi] Verbinde mit ");
-  Serial.println(WIFI_SSID);
+  // Pin lesen → HIGH = Heimnetz, LOW = AP-Modus
+  if (digitalRead(PIN_WIFI_MODE) == HIGH) {
+    // Ins Heimnetz einwählen
+    apModus = false;
+    WiFi.mode(WIFI_STA);
+    WiFi.disconnect(true);
+    delay(100);
+    WiFi.begin(WIFI_SSID, WIFI_PASS);
+    Serial.print("[WiFi] Verbinde mit ");
+    Serial.println(WIFI_SSID);
 
-  int counter = 0;
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-    counter++;
-    if (counter > 60) {
-      Serial.println("\n[WiFi] Verbindung fehlgeschlagen – Starte neu...");
-      ESP.restart();
+    int counter = 0;
+    while (WiFi.status() != WL_CONNECTED) {
+      delay(500);
+      Serial.print(".");
+      counter++;
+      if (counter > 60) {
+        Serial.println("\n[WiFi] Verbindung fehlgeschlagen – Starte neu...");
+        ESP.restart();
+      }
     }
-  }
 
-  WiFi.setSleep(false);
-  Serial.printf("\n[WiFi] Verbunden – IP: %s\n", WiFi.localIP().toString().c_str());
+    WiFi.setSleep(false);
+    Serial.printf("\n[WiFi] Verbunden – IP: %s\n", WiFi.localIP().toString().c_str());
+
+  } else {
+    // Accesspoint starten
+    apModus = true;
+    WiFi.mode(WIFI_AP);
+    WiFi.softAP("CamBot", "12345678");
+    Serial.printf("[AP] IP: %s\n", WiFi.softAPIP().toString().c_str());
+  }
 
   // Server aus der web_interface.cpp Datei starten
   serverStart();
